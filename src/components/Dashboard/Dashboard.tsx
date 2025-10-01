@@ -1,17 +1,43 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingDown, Target, Award, Calendar } from 'lucide-react';
 import { useCarbonData } from '../../hooks/useCarbonData';
 import CarbonChart from './CarbonChart';
 import ProgressCard from './ProgressCard';
 import SummaryCard from './SummaryCard';
+import { ActivityInput } from '../ActivityInput';
 
 const Dashboard: React.FC = () => {
-  const { data, todayTotal, weeklyTotal } = useCarbonData();
+  const { data, todayTotal, weeklyTotal, loading } = useCarbonData();
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
 
   const weeklyGoal = 150; // kg CO2
   const progressPercentage = Math.min((weeklyTotal / weeklyGoal) * 100, 100);
   const isOnTrack = weeklyTotal < weeklyGoal;
+
+  // Refresh data when new activities might be added
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdate(Date.now());
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Loading Dashboard...</h2>
+          <p className="text-gray-600">Fetching your carbon data</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 lg:p-8">
@@ -116,6 +142,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      <ActivityInput />
     </div>
   );
 };

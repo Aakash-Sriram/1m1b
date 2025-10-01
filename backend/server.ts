@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { query } from './db';
+import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
@@ -14,6 +14,34 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Import routes
+import profilesRouter from './routes/profiles';
+import chatRouter from './routes/chat';
+import suggestionsRouter from './routes/suggestions';
+import aiResultsRouter from './routes/ai-results';
+import carbonEntriesRouter from './routes/carbonEntries';
+import aiAnalysisRouter from './routes/aiAnalysis';
+
+// Add this import for the query function (adjust path as needed)
+import { query } from './db';
+
+// Health check (public)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Protected routes with Clerk auth
+app.use('/api/profiles', ClerkExpressRequireAuth(), profilesRouter);
+app.use('/api/chat', ClerkExpressRequireAuth(), chatRouter);
+app.use('/api/suggestions', ClerkExpressRequireAuth(), suggestionsRouter);
+app.use('/api/ai-results', ClerkExpressRequireAuth(), aiResultsRouter);
+app.use('/api/carbon-entries', ClerkExpressRequireAuth(), carbonEntriesRouter);
+app.use('/api/ai-analysis', ClerkExpressRequireAuth(), aiAnalysisRouter);
+
+app.listen(PORT, () => {
+  console.log(`Backend server running on port ${PORT}`);
+});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -180,8 +208,5 @@ app.post('/api/ai-results/:clerkUserId', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
-});
 
 export default app;

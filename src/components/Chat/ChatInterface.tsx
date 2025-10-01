@@ -17,6 +17,46 @@ const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Add this function to your ChatInterface component
+  const handleActivityInput = async (activity: string) => {
+    // Parse activity from chat message
+    // Example: "I drove 5km today" -> {activity_type: 'car_drive', value: 5, unit: 'km'}
+    
+    const activities = [
+      { pattern: /(\d+)\s*km.*car|drove.*(\d+)\s*km/, type: 'car_drive', unit: 'km' },
+      { pattern: /(\d+)\s*km.*bus|bus.*(\d+)\s*km/, type: 'bus_ride', unit: 'km' },
+      { pattern: /(\d+)\s*kwh.*electric|electric.*(\d+)\s*kwh/, type: 'electricity_usage', unit: 'kwh' },
+      { pattern: /(\d+)\s*hour.*gas|cook.*(\d+)\s*hour/, type: 'gas_cooking', unit: 'hour' },
+      { pattern: /(\d+\.?\d*)\s*kg.*beef|beef.*(\d+\.?\d*)\s*kg/, type: 'beef_consumption', unit: 'kg' },
+      { pattern: /(\d+)\s*km.*walk|walked.*(\d+)\s*km/, type: 'walking', unit: 'km' },
+      { pattern: /(\d+)\s*km.*cycle|cycled.*(\d+)\s*km/, type: 'cycling', unit: 'km' },
+    ];
+
+    for (const activityRule of activities) {
+      const match = activity.match(activityRule.pattern);
+      if (match) {
+        const value = parseFloat(match[1] || match[2]);
+        if (value) {
+          try {
+            await fetch('/api/carbon-entries', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                activity_type: activityRule.type,
+                activity_value: value,
+                unit: activityRule.unit
+              })
+            });
+            return true; // Activity saved
+          } catch (error) {
+            console.error('Failed to save activity:', error);
+          }
+        }
+      }
+    }
+    return false; // No activity detected
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -39,28 +79,39 @@ const ChatInterface: React.FC = () => {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "That's a great question! Based on your recent activity, I can see you've been doing well with reducing transport emissions. Have you considered carpooling or using public transport for longer trips?",
-        "I can help you calculate the carbon footprint of different activities. For example, a 10km car trip typically generates about 2.3kg of CO₂. Would you like me to suggest some eco-friendly alternatives?",
-        "Your weekly goal is 150kg CO₂, and you're currently at a good pace! Remember that small changes like switching to LED bulbs or eating one plant-based meal per day can make a significant impact.",
-        "Great initiative! Here are some personalized tips based on your patterns: Try cycling for trips under 5km, use a reusable water bottle, and consider composting your food waste.",
-        "I notice your energy consumption has been higher lately. Simple changes like unplugging electronics when not in use and using natural light during the day can reduce your footprint by 10-15%."
-      ];
+    // Try to save activity from user message
+    const activitySaved = await handleActivityInput(inputValue);
 
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    // Simulate AI response (update this to be more contextual)
+    setTimeout(() => {
+      let response = "";
+      
+      if (activitySaved) {
+        response = "Great! I've logged your activity and updated your carbon footprint. Check your dashboard to see the impact! 📊";
+      } else {
+        // Your existing responses
+        const responses = [
+          "That's a great question! Based on your recent activity, I can see you've been doing well with reducing transport emissions. Have you considered carpooling or using public transport for longer trips?",
+          "I can help you calculate the carbon footprint of different activities. For example, a 10km car trip typically generates about 2.3kg of CO₂. Would you like me to suggest some eco-friendly alternatives?",
+          "Your weekly goal is 150kg CO₂, and you're currently at a good pace! Remember that small changes like switching to LED bulbs or eating one plant-based meal per day can make a significant impact.",
+          "Great initiative! Here are some personalized tips based on your patterns: Try cycling for trips under 5km, use a reusable water bottle, and consider composting your food waste.",
+          "I notice your energy consumption has been higher lately. Simple changes like unplugging electronics when not in use and using natural light during the day can reduce your footprint by 10-15%.",
+          "Based on your carbon footprint data, I'd suggest focusing on your highest impact areas first. Small consistent changes can lead to big reductions over time!",
+          "Would you like me to analyze your recent activities and provide personalized suggestions for reducing your environmental impact?"
+        ];
+        response = responses[Math.floor(Math.random() * responses.length)];
+      }
       
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: randomResponse,
+        content: response,
         isUser: false,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, botMessage]);
       setIsLoading(false);
-    }, 1000 + Math.random() * 2000);
+    }, 1000 + Math.random() * 1000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
