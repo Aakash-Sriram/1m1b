@@ -11,15 +11,15 @@ import {
   TrendingUp,
   Leaf
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 
 const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    weeklyGoal: user?.weeklyGoal || 150,
+    name: user?.fullName || user?.firstName || '',
+    email: user?.primaryEmailAddress?.emailAddress || '',
+    weeklyGoal: 150, // Default goal since user doesn't have this property
     bio: 'Passionate about sustainable living and reducing my environmental impact.'
   });
 
@@ -78,12 +78,12 @@ const ProfilePage: React.FC = () => {
                     <Camera className="w-4 h-4 text-gray-600" />
                   </button>
                 </div>
-                <h2 className="text-xl font-semibold text-gray-800">{user?.name}</h2>
-                <p className="text-gray-600">{user?.email}</p>
+                <h2 className="text-xl font-semibold text-gray-800">{user?.fullName || user?.firstName || 'User'}</h2>
+                <p className="text-gray-600">{user?.primaryEmailAddress?.emailAddress}</p>
                 <div className="flex items-center justify-center space-x-2 mt-2">
                   <Calendar className="w-4 h-4 text-gray-500" />
                   <span className="text-sm text-gray-500">
-                    Joined {new Date(user?.joinedDate || '').toLocaleDateString('en-US', { 
+                    Joined {new Date(user?.createdAt || new Date()).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long' 
                     })}
@@ -99,7 +99,7 @@ const ProfilePage: React.FC = () => {
                     <span className="text-sm text-gray-600">Weekly Goal</span>
                     <div className="flex items-center space-x-1">
                       <Target className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-gray-800">{user?.weeklyGoal} kg CO₂</span>
+                      <span className="text-sm font-medium text-gray-800">150 kg CO₂</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">

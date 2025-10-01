@@ -12,11 +12,12 @@ import {
   Leaf,
   LogOut
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUser, useClerk } from '@clerk/clerk-react';
 
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const location = useLocation();
 
   const navigation = [
@@ -64,10 +65,10 @@ const Navbar: React.FC = () => {
 
         <div className="flex items-center space-x-4">
           <div className="text-sm text-gray-600">
-            Welcome, <span className="font-medium text-gray-800">{user?.name}</span>
+            Welcome, <span className="font-medium text-gray-800">{user?.fullName || user?.firstName || 'User'}</span>
           </div>
           <button
-            onClick={logout}
+            onClick={() => signOut()}
             className="flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
           >
             <LogOut className="w-4 h-4" />
@@ -150,11 +151,11 @@ const Navbar: React.FC = () => {
 
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <div className="px-4 py-2 text-sm text-gray-600">
-                    Welcome, <span className="font-medium text-gray-800">{user?.name}</span>
+                    Welcome, <span className="font-medium text-gray-800">{user?.fullName || user?.firstName || 'User'}</span>
                   </div>
                   <button
                     onClick={() => {
-                      logout();
+                      signOut();
                       setIsMobileMenuOpen(false);
                     }}
                     className="flex items-center space-x-3 px-4 py-3 w-full text-left text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors"
