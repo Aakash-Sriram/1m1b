@@ -1,13 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Loader, Bot, User } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
 import { ChatMessage } from '../../types';
 
 const ChatInterface: React.FC = () => {
+  const { user } = useUser();
+  const userName = user?.firstName || user?.fullName || 'there';
+  
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      content: "Hi Asha! I'm your eco-assistant. I can help you track your carbon footprint, suggest sustainable alternatives, and answer questions about environmental impact. How can I help you today?",
+      content: `Hi ${userName}! I'm your eco-assistant. I can help you track your carbon footprint, suggest sustainable alternatives, and answer questions about environmental impact. How can I help you today?`,
       isUser: false,
       timestamp: new Date(Date.now() - 60000)
     }
@@ -16,6 +20,23 @@ const ChatInterface: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update initial message when user info becomes available
+  useEffect(() => {
+    if (user) {
+      const userName = user.firstName || user.fullName || 'there';
+      setMessages(prev => {
+        const updatedMessages = [...prev];
+        if (updatedMessages[0]?.id === '1') {
+          updatedMessages[0] = {
+            ...updatedMessages[0],
+            content: `Hi ${userName}! I'm your eco-assistant. I can help you track your carbon footprint, suggest sustainable alternatives, and answer questions about environmental impact. How can I help you today?`
+          };
+        }
+        return updatedMessages;
+      });
+    }
+  }, [user]);
 
   // Add this function to your ChatInterface component
   const handleActivityInput = async (activity: string) => {
